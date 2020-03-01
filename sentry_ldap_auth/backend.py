@@ -9,6 +9,8 @@ from sentry.models import (
     UserOption,
 )
 
+import logging
+logger = logging.getLogger("sentry-ldap-auth")
 
 def _get_effective_sentry_role(group_names):
     role_priority_order = [
@@ -69,35 +71,29 @@ class SentryLdapBackend(LDAPBackend):
             if email:
                 UserEmail.objects.get_or_create(user=user, email=email)
 
-        # Check to see if we need to add the user to an organization
-        if not settings.AUTH_LDAP_DEFAULT_SENTRY_ORGANIZATION:
-            return model
-
-        # If the user is already a member of an organization, leave them be
-        orgs = OrganizationMember.objects.filter(user=user)
-        if orgs != None and len(orgs) > 0:
-            return model
-
-        # Find the default organization
-        organizations = Organization.objects.filter(name=settings.AUTH_LDAP_DEFAULT_SENTRY_ORGANIZATION)
-
-        if not organizations or len(organizations) < 1:
-            return model
-
         member_role = _get_effective_sentry_role(ldap_user.group_names)
         if not member_role:
             member_role = getattr(settings, 'AUTH_LDAP_SENTRY_ORGANIZATION_ROLE_TYPE', None)
 
         has_global_access = getattr(settings, 'AUTH_LDAP_SENTRY_ORGANIZATION_GLOBAL_ACCESS', False)
 
-        # Add the user to the organization with global access
-        OrganizationMember.objects.create(
-            organization=organizations[0],
-            user=user,
-            role=member_role,
-            has_global_access=has_global_access,
-            flags=getattr(OrganizationMember.flags, 'sso:linked'),
-        )
+        orgs = OrganizationMember.objects.filter(user=user)
+        if orgs == None or len(orgs) == 0:  # user is not in any organisation 
+            if settings.AUTH_LDAP_DEFAULT_SENTRY_ORGANIZATION:  # user should be added to an organisation
+                organizations = Organization.objects.filter(slug=settings.AUTH_LDAP_DEFAULT_SENTRY_ORGANIZATION)    
+                if not organizations or len(organizations) < 1:
+                    logger.error("The default organization from the ldap config does not exist")
+                    return model
+                OrganizationMember.objects.create(  # Add the user to the organization
+                    organization=organizations[0],
+                    user=user,
+                    role=member_role,
+                    has_global_access=has_global_access,
+                    flags=getattr(OrganizationMember.flags, 'sso:linked'),
+                )
+        else:   # user is in organisation update it's role
+            orgs[0].role = member_role
+            orgs[0].save()
 
         if not getattr(settings, 'AUTH_LDAP_SENTRY_SUBSCRIBE_BY_DEFAULT', True):
             UserOption.objects.set_value(
