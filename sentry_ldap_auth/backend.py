@@ -78,8 +78,10 @@ class SentryLdapBackend(LDAPBackend):
         has_global_access = getattr(settings, 'AUTH_LDAP_SENTRY_ORGANIZATION_GLOBAL_ACCESS', False)
 
         orgs = OrganizationMember.objects.filter(user=user)
-        if orgs == None or len(orgs) == 0:  # user is not in any organisation 
+        if orgs == None or len(orgs) == 0:  # user is not in any organisation
+            logger.error("user is not in any organisation")
             if settings.AUTH_LDAP_DEFAULT_SENTRY_ORGANIZATION:  # user should be added to an organisation
+                logger.error("found setting: " + settings.AUTH_LDAP_DEFAULT_SENTRY_ORGANIZATION)
                 organizations = Organization.objects.filter(slug=settings.AUTH_LDAP_DEFAULT_SENTRY_ORGANIZATION)    
                 if not organizations or len(organizations) < 1:
                     logger.error("The default organization from the ldap config does not exist")
@@ -92,6 +94,7 @@ class SentryLdapBackend(LDAPBackend):
                     flags=getattr(OrganizationMember.flags, 'sso:linked'),
                 )
         else:   # user is in organisation update it's role
+            logger.error("user is in organisation update it's role")
             orgs[0].role = member_role
             orgs[0].save()
 
