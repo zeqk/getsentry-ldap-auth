@@ -92,9 +92,9 @@ class SentryLdapBackend(LDAPBackend):
                 OrganizationMember.objects.create(  # Add the user to the organization
                     organization=organizations[0],
                     user=user,
-                    role=member_role,
-                    has_global_access=has_global_access,
-                    flags=getattr(OrganizationMember.flags, 'sso:linked'),
+                    #role=member_role,
+                    #has_global_access=has_global_access,
+                    flags=getattr(OrganizationMember.flags, u'sso:linked'),
                 )
         else:   # user is in organisation update it's role
             logger.error("user is in organisation update it's role")
