@@ -40,6 +40,7 @@ class SentryLdapBackend(LDAPBackend):
     def get_or_create_user(self, username, ldap_user):
         logger.error("hit 3")
         username_field = getattr(settings, 'AUTH_LDAP_SENTRY_USERNAME_FIELD', '')
+        print('TEST OUTPUT = "{}"').format(username_field)
         if username_field:
             # pull the username out of the ldap_user info
             if ldap_user and username_field in ldap_user.attrs:
