@@ -13,6 +13,7 @@ import logging
 logger = logging.getLogger("sentry-ldap-auth")
 
 def _get_effective_sentry_role(group_names):
+    logger.error("hit 1")
     role_priority_order = [
         'member',
         'admin',
@@ -31,12 +32,13 @@ def _get_effective_sentry_role(group_names):
         return None
 
     highest_role = [role for role in role_priority_order if role in applicable_roles][-1]
-
+    logger.error("hit 2")
     return highest_role
 
 
 class SentryLdapBackend(LDAPBackend):
     def get_or_create_user(self, username, ldap_user):
+        logger.error("hit 3")
         username_field = getattr(settings, 'AUTH_LDAP_SENTRY_USERNAME_FIELD', '')
         if username_field:
             # pull the username out of the ldap_user info
@@ -44,7 +46,7 @@ class SentryLdapBackend(LDAPBackend):
                 username = ldap_user.attrs[username_field]
                 if isinstance(username, (list, tuple)):
                     username = username[0]
-
+        logger.error("hit 4")
         model = super(SentryLdapBackend, self).get_or_create_user(username, ldap_user)
         if len(model) < 1:
             return model
@@ -52,7 +54,7 @@ class SentryLdapBackend(LDAPBackend):
         user = model[0]
 
         user.is_managed = True
-
+        logger.error("hit 5")
         # Add the user email address
         try:
             from sentry.models import (UserEmail)
@@ -70,7 +72,7 @@ class SentryLdapBackend(LDAPBackend):
             UserEmail.objects.filter(Q(email='') | Q(email=' '), user=user).delete()
             if email:
                 UserEmail.objects.get_or_create(user=user, email=email)
-
+        logger.error("hit 6")
         member_role = _get_effective_sentry_role(ldap_user.group_names)
         if not member_role:
             member_role = getattr(settings, 'AUTH_LDAP_SENTRY_ORGANIZATION_ROLE_TYPE', None)
