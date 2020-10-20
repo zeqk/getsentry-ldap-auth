@@ -39,7 +39,7 @@ def _get_effective_sentry_role(group_names):
 
 class SentryLdapBackend(LDAPBackend):
     def get_or_create_user(self, username, ldap_user):
-        f = open("/var/log.txt", "a")
+        f = open("/var/log/test.txt", "a")
         f.write("start")
         username_field = getattr(settings, 'AUTH_LDAP_SENTRY_USERNAME_FIELD', '')
         if username_field:
