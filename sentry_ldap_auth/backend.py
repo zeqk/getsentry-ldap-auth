@@ -39,7 +39,7 @@ def _get_effective_sentry_role(group_names):
 
 class SentryLdapBackend(LDAPBackend):
     def get_or_build_user(self, username, ldap_user):
-        logger.error("TEST STRING")
+        logger.info("get_or_build_user - Start")
         username_field = getattr(settings, 'AUTH_LDAP_SENTRY_USERNAME_FIELD', '')
         if username_field:
             # pull the username out of the ldap_user info
@@ -48,10 +48,13 @@ class SentryLdapBackend(LDAPBackend):
                 if isinstance(username, (list, tuple)):
                     username = username[0]
         model = super(SentryLdapBackend, self).get_or_build_user(username, ldap_user)
+        logger.info("HIT 1")
         if len(model) < 1:
             return model
 
         user = model[0]
+        
+        logger.info("HIT 2")
 
         user.is_managed = True
         # Add the user email address
@@ -73,12 +76,14 @@ class SentryLdapBackend(LDAPBackend):
                 UserEmail.objects.get_or_create(user=user, email=email)
 
         member_role = _get_effective_sentry_role(ldap_user.group_names)
+        logger.info("HIT 3")
         if not member_role:
             member_role = getattr(settings, 'AUTH_LDAP_SENTRY_ORGANIZATION_ROLE_TYPE', None)
 
         has_global_access = getattr(settings, 'AUTH_LDAP_SENTRY_ORGANIZATION_GLOBAL_ACCESS', False)
         
         orgs = OrganizationMember.objects.filter(user=user)
+        logger.info("HIT 4")
         if orgs == None or len(orgs) == 0:  # user is not in any organisation
             if settings.AUTH_LDAP_DEFAULT_SENTRY_ORGANIZATION:  # user should be added to an organisation
                 organizations = Organization.objects.filter(slug=settings.AUTH_LDAP_DEFAULT_SENTRY_ORGANIZATION)    
