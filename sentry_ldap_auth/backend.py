@@ -47,7 +47,7 @@ class SentryLdapBackend(LDAPBackend):
                 username = ldap_user.attrs[username_field]
                 if isinstance(username, (list, tuple)):
                     username = username[0]
-        model = super(SentryLdapBackend, self).get_or_create_user(username, ldap_user)
+        model = super(SentryLdapBackend, self).get_or_build_user(username, ldap_user)
         if len(model) < 1:
             return model
 
