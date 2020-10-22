@@ -60,9 +60,12 @@ class SentryLdapBackend(LDAPBackend):
         # Add the user email address
         try:
             from sentry.models import (UserEmail)
+            logger.info("HIT 2 A")
         except ImportError:
+            logger.info("HIT 2 B")
             pass
         else:
+            logger.info("HIT 2 C")
             if 'mail' in ldap_user.attrs:
                 email = ldap_user.attrs.get('mail')[0]
             elif not hasattr(settings, 'AUTH_LDAP_DEFAULT_EMAIL_DOMAIN'):
@@ -71,10 +74,14 @@ class SentryLdapBackend(LDAPBackend):
                 email = username + '@' + settings.AUTH_LDAP_DEFAULT_EMAIL_DOMAIN
 
             # django-auth-ldap may have accidentally created an empty email address
+            logger.info("HIT 2 D")
+            
             UserEmail.objects.filter(Q(email='') | Q(email=' '), user=user).delete()
             if email:
+                logger.info("HIT 2 E")
                 UserEmail.objects.get_or_create(user=user, email=email)
 
+        logger.info("HIT 2 F")
         member_role = _get_effective_sentry_role(ldap_user.group_names)
         logger.info("HIT 3")
         if not member_role:
