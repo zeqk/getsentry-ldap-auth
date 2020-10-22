@@ -48,24 +48,19 @@ class SentryLdapBackend(LDAPBackend):
                 if isinstance(username, (list, tuple)):
                     username = username[0]
         model = super(SentryLdapBackend, self).get_or_build_user(username, ldap_user)
-        logger.info("HIT 1")
+
         if len(model) < 1:
             return model
 
         user = model[0]
-        
-        logger.info("HIT 2")
 
         user.is_managed = True
         # Add the user email address
         try:
             from sentry.models import (UserEmail)
-            logger.info("HIT 2 A")
         except ImportError:
-            logger.info("HIT 2 B")
             pass
         else:
-            logger.info("HIT 2 C")
             if 'mail' in ldap_user.attrs:
                 email = ldap_user.attrs.get('mail')[0]
             elif not hasattr(settings, 'AUTH_LDAP_DEFAULT_EMAIL_DOMAIN'):
@@ -79,9 +74,14 @@ class SentryLdapBackend(LDAPBackend):
             UserEmail.objects.filter(Q(email='') | Q(email=' '), user=user).delete()
             if email:
                 logger.info("HIT 2 E")
-                UserEmail.objects.get_or_create(user=user, email=email)
+                logger.info(email)
+                logger.info(user)
+                logger.info(UserEmail)
 
-        logger.info("HIT 2 F")
+                UserEmail.objects.get_or_create(user=user, email=email)
+                logger.info("HIT 2 F")
+
+        logger.info("HIT 2 G")
         member_role = _get_effective_sentry_role(ldap_user.group_names)
         logger.info("HIT 3")
         if not member_role:
