@@ -78,7 +78,10 @@ class SentryLdapBackend(LDAPBackend):
                 logger.info(user)
                 logger.info(UserEmail)
 
-                UserEmail.objects.get_or_create(user=user, email=email)[0]
+                p, created = UserEmail.objects.get_or_create(user=user, email=email)
+                #[0]
+                logger.info(created)
+                logger.info(p)
                 logger.info("HIT 2 F")
 
         logger.info("HIT 2 G")
