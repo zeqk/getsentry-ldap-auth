@@ -73,6 +73,7 @@ class SentryLdapBackend(LDAPBackend):
             
             UserEmail.objects.filter(Q(email='') | Q(email=' '), user=user).delete()
             if email:
+                logger.info("I Still need fixing")
                 #UserEmail.objects.get_or_create(user=user, email=email)    # This needs fixing
 
         member_role = _get_effective_sentry_role(ldap_user.group_names)
