@@ -73,18 +73,10 @@ class SentryLdapBackend(LDAPBackend):
             
             UserEmail.objects.filter(Q(email='') | Q(email=' '), user=user).delete()
             if email:
-                logger.info("HIT 2 E")
-                logger.info(email)
-                logger.info(user)
-                logger.info(UserEmail)
+                #UserEmail.objects.get_or_create(user=user, email=email)    # This needs fixing
 
-                #UserEmail.objects.get_or_create(user=user, email=email)
-                #[0]
-                logger.info("HIT 2 F")
-
-        logger.info("HIT 2 G")
         member_role = _get_effective_sentry_role(ldap_user.group_names)
-        logger.info("HIT 3")
+        
         if not member_role:
             member_role = getattr(settings, 'AUTH_LDAP_SENTRY_ORGANIZATION_ROLE_TYPE', None)
 
@@ -93,13 +85,16 @@ class SentryLdapBackend(LDAPBackend):
         orgs = OrganizationMember.objects.filter(user=user)
         logger.info("HIT 4")
         if orgs == None or len(orgs) == 0:  # user is not in any organisation
+            logger.info("HIT 5")
             if settings.AUTH_LDAP_DEFAULT_SENTRY_ORGANIZATION:  # user should be added to an organisation
-                organizations = Organization.objects.filter(slug=settings.AUTH_LDAP_DEFAULT_SENTRY_ORGANIZATION)    
+                logger.info("HIT 6")
+                organizations = Organization.objects.filter(slug=settings.AUTH_LDAP_DEFAULT_SENTRY_ORGANIZATION)
+                logger.info("HIT 7")
 
                 if not organizations or len(organizations) < 1:
                     logger.error("The default organization from the ldap config does not exist")
-
                     return model
+                logger.info("HIT 8")
                 OrganizationMember.objects.create(  # Add the user to the organization
                     organization=organizations[0],
                     user=user,
@@ -107,12 +102,17 @@ class SentryLdapBackend(LDAPBackend):
                     has_global_access=has_global_access,
                     flags=getattr(OrganizationMember.flags, u'sso:linked')
                 )
+                logger.info("HIT 9")
         else:   # user is in organisation update it's role
+            logger.info("HIT 10")
             orgs[0].role = member_role
             orgs[0].save()
+        
+        logger.info("HIT 10")
           
 
         if not getattr(settings, 'AUTH_LDAP_SENTRY_SUBSCRIBE_BY_DEFAULT', True):
+            logger.info("HIT 11")
 
             UserOption.objects.set_value(
                 user=user,
