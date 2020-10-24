@@ -36,17 +36,19 @@ class SentryLdapBackend(LDAPBackend):
             pass
 
         username = ldap_user.attrs[LDAP_USERNAME_FIELD]
-
         if isinstance(username, (list, tuple)):
-            logger.info("isinstance")
             username = username[0]
-        else:
-            logger.info("no instance")
-        
-        logger.info("model")
-        
-        model = super(SentryLdapBackend, self).get_or_build_user(username, ldap_user)
-        
+
+        user_model = super(SentryLdapBackend, self).get_or_build_user(username, ldap_user)
+        if len(user_model) < 1:
+            logger.warning("Did not find a user_model")
+            return user_model
+
+        user = model[0]
+        user.is_managed = True
+
+
+
         logger.info("get_or_build_user - End")
 
         return model
