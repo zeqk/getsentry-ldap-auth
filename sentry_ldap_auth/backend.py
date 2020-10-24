@@ -26,16 +26,16 @@ class SentryLdapBackend(LDAPBackend):
             logger.warning("LDAP User Missing")
             pass
 
-        LDAP_USERNAME_FIELD = getattr(settings, 'AUTH_LDAP_SENTRY_USERNAME_FIELD', '')
-        if not LDAP_USERNAME_FIELD: 
+        CONFIG_USERNAME_FIELD = getattr(settings, 'AUTH_LDAP_SENTRY_USERNAME_FIELD', '')
+        if not CONFIG_USERNAME_FIELD: 
             logger.warning("AUTH_LDAP_SENTRY_USERNAME_FIELD Missing or Empty")
             pass
 
-        if not LDAP_USERNAME_FIELD in ldap_user.attrs:
+        if not CONFIG_USERNAME_FIELD in ldap_user.attrs:
             logger.warning("AUTH_LDAP_SENTRY_USERNAME_FIELD does not exist in the LDAP User")
             pass
 
-        username = ldap_user.attrs[LDAP_USERNAME_FIELD]
+        username = ldap_user.attrs[CONFIG_USERNAME_FIELD]
         if isinstance(username, (list, tuple)):
             username = username[0]
 
