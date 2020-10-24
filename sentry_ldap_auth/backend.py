@@ -18,7 +18,7 @@ class SentryLdapBackend(LDAPBackend):
         
         logger.info("get_or_build_user - Start")
         logger.info("username:" + username)
-        logger.info(ldap_user)
+        logger.info("ldap_user:" + str(ldap_user))
 
         if not username:
             logger.warning("Username Missing")
