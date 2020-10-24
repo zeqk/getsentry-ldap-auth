@@ -17,8 +17,6 @@ class SentryLdapBackend(LDAPBackend):
     def get_or_build_user(self, username, ldap_user):
         
         logger.info("get_or_build_user - Start")
-        logger.info("username:" + username)
-        logger.info("ldap_user:" + str(ldap_user))
 
         if not username:
             logger.warning("Username Missing")
@@ -44,8 +42,10 @@ class SentryLdapBackend(LDAPBackend):
             logger.info("isinstance: " + username[0])
             username = username[0]
         
-        
+        logger.info("model")
         
         model = super(SentryLdapBackend, self).get_or_build_user(username, ldap_user)
+        
+        logger.info("get_or_build_user - End")
 
         return model
