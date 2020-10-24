@@ -34,12 +34,15 @@ class SentryLdapBackend(LDAPBackend):
         if not LDAP_USERNAME_FIELD in ldap_user.attrs:
             logger.warning("AUTH_LDAP_SENTRY_USERNAME_FIELD does not exist in the LDAP User")
             pass
-
+        
+        logger.info("hit 1")
+        
         username = ldap_user.attrs[LDAP_USERNAME_FIELD]
-        logger.info("new username: " + username)
+        
+        #logger.info("new username: " + username)
         
         if isinstance(username, (list, tuple)):
-            logger.info("isinstance: " + username[0])
+            #logger.info("isinstance: " + username[0])
             username = username[0]
         
         logger.info("model")
