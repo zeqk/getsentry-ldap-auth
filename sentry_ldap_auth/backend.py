@@ -38,10 +38,10 @@ class SentryLdapBackend(LDAPBackend):
         username = ldap_user.attrs[LDAP_USERNAME_FIELD]
 
         if isinstance(username, (list, tuple)):
-            logger.info("isinstance: ", str(len(username)))
+            logger.info("isinstance")
             username = username[0]
         else:
-            logger.info("no instance: ", str(type(username)))
+            logger.info("no instance")
         
         logger.info("model")
         
