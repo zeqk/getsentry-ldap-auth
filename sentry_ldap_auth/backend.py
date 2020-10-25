@@ -6,11 +6,14 @@ from sentry.models import (
     Organization,
     OrganizationMember,
     UserOption,
+    UserEmail
 )
+
 
 
 import logging
 logger = logging.getLogger("sentry-ldap-auth")
+
 
 
 def get_sentry_role_from_group_Mapping(group_names):
@@ -26,6 +29,19 @@ def get_sentry_role_from_group_Mapping(group_names):
 
     highest_role = [role for role in ['member','admin','manager','owner'] if role in applicable_roles][-1]
     return highest_role
+
+
+
+def get_user_mail(ldap_user):
+    if 'mail' in ldap_user.attrs:
+        email = ldap_user.attrs.get('mail')[0]
+    elif hasattr(settings, 'AUTH_LDAP_DEFAULT_EMAIL_DOMAIN'):
+        email = username + '@' + settings.AUTH_LDAP_DEFAULT_EMAIL_DOMAIN
+    else:
+        email = ''
+
+    logger.info("EMAIL: " + email)
+    return email
 
 
 
@@ -62,26 +78,15 @@ class SentryLdapBackend(LDAPBackend):
 
         user = user_model[0]
         user.is_managed = True
-        
-        if user.is_managed:
-            logger.info("is managed")
-        else:
-            logger.info("NOT managed")
 
         user_global_access = getattr(settings, 'AUTH_LDAP_SENTRY_ORGANIZATION_GLOBAL_ACCESS', False)
-        if user_global_access:
-            logger.info("HAS GLOBAL ACCESS")
-        else:
-            logger.info("NO GLOBAL ACCESS")
-            
+
         user_role = get_sentry_role_from_group_Mapping(ldap_user.group_names)
-        
-        logger.info("user_role: " + user_role)
         if not user_role:
-            logger.info("default user_role")
             user_role = getattr(settings, 'AUTH_LDAP_SENTRY_ORGANIZATION_ROLE_TYPE', None)
 
 
+        user_mail = get_user_mail(ldap_user)
         
         
         logger.info("get_or_build_user - End")
