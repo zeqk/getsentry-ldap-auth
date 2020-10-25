@@ -60,7 +60,7 @@ class SentryLdapBackend(LDAPBackend):
             logger.warning("Did not find a user_model")
             return user_model
 
-        user = model[0]
+        user = user_model[0]
         user.is_managed = True
         
         if user.is_managed:
@@ -86,4 +86,4 @@ class SentryLdapBackend(LDAPBackend):
         
         logger.info("get_or_build_user - End")
 
-        return model
+        return user_model
