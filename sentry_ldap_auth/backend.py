@@ -66,6 +66,34 @@ def assign_mail_to_user(ldap_user, user):
     return True
 
 
+def update_org_membership(user_model, user_role, user_global_access):
+    user_organizations = OrganizationMember.objects.filter(user=user_model)
+    if user_organizations == None or len(user_organizations) == 0:
+        logger.info("User is not in any organisation.")
+        if not settings.AUTH_LDAP_DEFAULT_SENTRY_ORGANIZATION:
+            logger.error("No default organization in ldap config.")
+            return False
+        #logger.info("Adding user to: " + settings.AUTH_LDAP_DEFAULT_SENTRY_ORGANIZATION)
+        target_organizations = Organization.objects.filter(slug=settings.AUTH_LDAP_DEFAULT_SENTRY_ORGANIZATION)
+        if not target_organizations or len(target_organizations) < 1:
+            logger.error("Did not find the organization from the ldap config.")
+            return False
+        organization_result = OrganizationMember.objects.create(
+            organization=organizations[0],
+            user=user_model,
+            role=user_role,
+            has_global_access=user_global_access,
+            flags=getattr(OrganizationMember.flags, u'sso:linked')
+        )
+        if organization_result:
+            logger.info("organization_result worked")
+        else:
+            logger.info("organization_result failed")
+        return True
+    logger.info("User is already in organisation. Updating settings")
+    orgs[0].role = user_role
+    orgs[0].save()
+
 
 class SentryLdapBackend(LDAPBackend):
     def get_or_build_user(self, username, ldap_user):
@@ -107,15 +135,9 @@ class SentryLdapBackend(LDAPBackend):
         user_global_access = getattr(settings, 'AUTH_LDAP_SENTRY_ORGANIZATION_GLOBAL_ACCESS', False)
         user_role = get_sentry_role_from_group_Mapping(ldap_user.group_names)
 
+        update_org_membership(user_model[0], user_role, user_global_access)
         
-        
-        user_organizations = OrganizationMember.objects.filter(user=user_model[0])
-        logger.info("OrganizationMember: " + str(len(user_organizations)))
-        
-        if user_organizations == None or len(user_organizations) == 0:
-            logger.debug("User is not in any organisation. Assigning")
-        else:
-            logger.info("User is already in organisation. Updating settings")
+
         
         
         
