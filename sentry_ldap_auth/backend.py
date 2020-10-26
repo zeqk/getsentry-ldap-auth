@@ -56,14 +56,12 @@ def assign_mail_to_user(ldap_user, user):
         logger.info("Found empty EMail address in django. Deleting")
         Empty_Email.delete()
 
-
     logger.info("EMAIL: " + email)
     Created_Mail, Success = UserEmail.objects.get_or_create(user=user, email=email)
     if Success:
         logger.info("Success")
     else:
         logger.info("failed")
-
     
     return True
 
@@ -101,16 +99,29 @@ class SentryLdapBackend(LDAPBackend):
             return user_model
 
         assign_mail_success = assign_mail_to_user(ldap_user, user_model[0])
-        if not assign_mail_success:
+        if not assign_mail_success: #M aybe this is boardline wrong i the get or create can return false?
             logger.warning("Unable to assign mail address to user")
             return user_model
-        
-        
-        
+
         user_model[0].is_managed = True
         user_global_access = getattr(settings, 'AUTH_LDAP_SENTRY_ORGANIZATION_GLOBAL_ACCESS', False)
         user_role = get_sentry_role_from_group_Mapping(ldap_user.group_names)
+
         
+        
+        user_organizations = OrganizationMember.objects.filter(user=user_model[0])
+        logger.info("OrganizationMember: " + str(len(user_organizations)))
+        
+        if user_organizations == None or len(user_organizations) == 0:
+            logger.debug("User is not in any organisation. Assigning")
+        else:
+            logger.info("User is already in organisation. Updating settings")
+        
+        
+        
+        
+
+
         logger.info("get_or_build_user - End")
 
         return user_model
