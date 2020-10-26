@@ -101,13 +101,17 @@ class SentryLdapBackend(LDAPBackend):
         user_mail = get_user_mail(ldap_user)
 
 
-        attributes = [attr for attr in dir(UserEmail) if not attr.startswith('__')]
-        logger.info("test: " + str(attributes))
+        #attributes = [attr for attr in dir(UserEmail) if not attr.startswith('__')]
+        #logger.info("test: " + str(attributes))
         #UserEmail.objects.filter(Q(email='') | Q(email=' '), user=user).delete()
         #if email:
             #logger.info("I Still need fixing")
             #UserEmail.objects.get_or_create(user=user, email=email)    # This needs fixing
-        
+        test = UserEmail.objects.filter(Q(email='') | Q(email=' '), user=user)
+        if test:
+            logger.info("UserEmail Test: found one")
+        else:
+            logger.info("UserEmail Test: no mail")
         
         logger.info("get_or_build_user - End")
 
