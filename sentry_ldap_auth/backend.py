@@ -4,9 +4,9 @@ from django.conf import settings
 from django.db.models import Q
 from sentry.models import (Organization, OrganizationMember, UserOption, UserEmail)
 
-
 import logging
 logger = logging.getLogger("sentry-ldap-auth")
+
 
 
 def get_sentry_role_from_group_Mapping(group_names):
@@ -57,50 +57,55 @@ def assign_mail_to_user(ldap_user, user):
         Empty_Email.delete()
 
     logger.info("EMAIL: " + email)
-    Created_Mail, Success = UserEmail.objects.get_or_create(user=user, email=email)
+    Created_Mail, Success = UserEmail.objects.get_or_create(user=user, email=email)  #Whats up with this?
     if Success:
-        logger.info("Success") #Whats up with this?
+        logger.info("Success")
     else:
         logger.info("failed")
     
     return True
 
 
-def update_org_membership(user_model, user_role, user_global_access):
+def update_org_membership(user_model, user_role): 
     user_organizations = OrganizationMember.objects.filter(user=user_model)
     if user_organizations == None or len(user_organizations) == 0:
         logger.info("User is not in any organisation.")
+
         if not settings.AUTH_LDAP_DEFAULT_SENTRY_ORGANIZATION:
             logger.error("No default organization in ldap config.")
             return False
-        #logger.info("Adding user to: " + settings.AUTH_LDAP_DEFAULT_SENTRY_ORGANIZATION)
+
         target_organizations = Organization.objects.filter(slug=settings.AUTH_LDAP_DEFAULT_SENTRY_ORGANIZATION)
         if not target_organizations or len(target_organizations) < 1:
             logger.error("Did not find the organization from the ldap config.")
             return False
+
         organization_result = OrganizationMember.objects.create(
             organization=target_organizations[0],
             user=user_model,
             role=user_role,
-            has_global_access=user_global_access,
+            has_global_access=getattr(settings, 'AUTH_LDAP_SENTRY_ORGANIZATION_GLOBAL_ACCESS', False),
             flags=getattr(OrganizationMember.flags, u'sso:linked')
         )
+
         if organization_result:
             logger.info("Added user to organization")
             return True
         else:
             logger.error("Failed to add user to organization")
             return False
+
     logger.info("User is already in organisation. Updating settings")
     user_organizations[0].role = user_role
-    user_organizations[0].has_global_access = user_global_access
+    user_organizations[0].has_global_access = getattr(settings, 'AUTH_LDAP_SENTRY_ORGANIZATION_GLOBAL_ACCESS', False)
     user_organizations[0].save()
-
+    
+    
 
 class SentryLdapBackend(LDAPBackend):
     def get_or_build_user(self, username, ldap_user):
 
-        logger.info("get_or_build_user - Start")
+        logger.info("Start")
 
         if not username:
             logger.warning("Username Missing")
@@ -125,27 +130,23 @@ class SentryLdapBackend(LDAPBackend):
 
         user_model = super(SentryLdapBackend, self).get_or_build_user(username, ldap_user)
         if len(user_model) < 1:
-            logger.warning("Did not find a user_model")
+            logger.warning("Did not find a user model")
             return user_model
 
         assign_mail_success = assign_mail_to_user(ldap_user, user_model[0])
-        if not assign_mail_success: #M aybe this is boardline wrong i the get or create can return false?
+        if not assign_mail_success:
             logger.warning("Unable to assign mail address to user")
             return user_model
 
         user_model[0].is_managed = True
-        user_global_access = getattr(settings, 'AUTH_LDAP_SENTRY_ORGANIZATION_GLOBAL_ACCESS', False)
+
+        if getattr(settings, 'AUTH_LDAP_SENTRY_SUBSCRIBE_BY_DEFAULT', True):
+            UserOption.objects.set_value(user=user_model[0], project=None, key='subscribe_by_default', value='1')
+        else:
+            UserOption.objects.set_value(user=user_model[0], project=None, key='subscribe_by_default', value='0')        
         user_role = get_sentry_role_from_group_Mapping(ldap_user.group_names)
 
-        update_org_membership(user_model[0], user_role, user_global_access)
-        
+        update_org_membership(user_model[0], user_role)
 
-        
-        
-        
-        
-
-
-        logger.info("get_or_build_user - End")
-
+        logger.info("End")
         return user_model
