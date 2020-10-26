@@ -79,7 +79,7 @@ def update_org_membership(user_model, user_role, user_global_access):
             logger.error("Did not find the organization from the ldap config.")
             return False
         organization_result = OrganizationMember.objects.create(
-            organization=organizations[0],
+            organization=target_organizations[0],
             user=user_model,
             role=user_role,
             has_global_access=user_global_access,
@@ -91,8 +91,8 @@ def update_org_membership(user_model, user_role, user_global_access):
             logger.info("organization_result failed")
         return True
     logger.info("User is already in organisation. Updating settings")
-    orgs[0].role = user_role
-    orgs[0].save()
+    user_organizations[0].role = user_role
+    user_organizations[0].save()
 
 
 class SentryLdapBackend(LDAPBackend):
