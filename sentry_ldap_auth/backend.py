@@ -17,17 +17,35 @@ logger = logging.getLogger("sentry-ldap-auth")
 
 
 def get_sentry_role_from_group_Mapping(group_names):
+    CONFIG_DEFAULT_ROLE = getattr(settings, 'AUTH_LDAP_SENTRY_ORGANIZATION_ROLE_TYPE', None)
+    
     CONFIG_ROLE_MAPPING = getattr(settings, 'AUTH_LDAP_SENTRY_GROUP_ROLE_MAPPING', None)
     if not group_names or not CONFIG_ROLE_MAPPING:
-        logger.debug("User is not in any known group")
-        return None
+        if CONFIG_DEFAULT_ROLE:
+            logger.debug("User is not in any known group. Using default from config")
+            return CONFIG_DEFAULT_ROLE
+        else:
+            logger.debug("User is not in any known group and no default specified")
+            return None
 
     applicable_roles = [role for role, groups in CONFIG_ROLE_MAPPING.items() if group_names.intersection(groups)]
     if not applicable_roles:
-        logger.debug("User has no match with group mapping")
-        return None
+        if CONFIG_DEFAULT_ROLE:
+            logger.debug("User has no match with group mapping. Using default from config")
+            return CONFIG_DEFAULT_ROLE
+        else:
+            logger.debug("User has no match with group mapping and no default specified")
+            return None
 
     highest_role = [role for role in ['member','admin','manager','owner'] if role in applicable_roles][-1]
+    if not highest_role:
+        if CONFIG_DEFAULT_ROLE:
+            logger.debug("User has no match with sentry group names. Using default from config")
+            return CONFIG_DEFAULT_ROLE
+        else:
+            logger.debug("User has no match with sentry group names and no default specified")
+            return None
+
     return highest_role
 
 
@@ -82,8 +100,7 @@ class SentryLdapBackend(LDAPBackend):
         user_global_access = getattr(settings, 'AUTH_LDAP_SENTRY_ORGANIZATION_GLOBAL_ACCESS', False)
 
         user_role = get_sentry_role_from_group_Mapping(ldap_user.group_names)
-        if not user_role:
-            user_role = getattr(settings, 'AUTH_LDAP_SENTRY_ORGANIZATION_ROLE_TYPE', None)
+        logger.info("user_role: " + user_role)
 
 
         user_mail = get_user_mail(ldap_user)
