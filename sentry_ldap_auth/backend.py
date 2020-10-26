@@ -96,14 +96,17 @@ class SentryLdapBackend(LDAPBackend):
 
         user = user_model[0]
         user.is_managed = True
-
         user_global_access = getattr(settings, 'AUTH_LDAP_SENTRY_ORGANIZATION_GLOBAL_ACCESS', False)
-
         user_role = get_sentry_role_from_group_Mapping(ldap_user.group_names)
-        logger.info("user_role: " + user_role)
-
-
         user_mail = get_user_mail(ldap_user)
+
+
+        attributes = [attr for attr in dir(UserEmail) if not attr.startswith('__')]
+        logger.info("test: " + str(attributes))
+        #UserEmail.objects.filter(Q(email='') | Q(email=' '), user=user).delete()
+        #if email:
+            #logger.info("I Still need fixing")
+            #UserEmail.objects.get_or_create(user=user, email=email)    # This needs fixing
         
         
         logger.info("get_or_build_user - End")
