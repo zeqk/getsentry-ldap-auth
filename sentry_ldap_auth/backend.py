@@ -59,7 +59,7 @@ def assign_mail_to_user(ldap_user, user):
     logger.info("EMAIL: " + email)
     Created_Mail, Success = UserEmail.objects.get_or_create(user=user, email=email)
     if Success:
-        logger.info("Success")
+        logger.info("Success") #Whats up with this?
     else:
         logger.info("failed")
     
@@ -86,12 +86,14 @@ def update_org_membership(user_model, user_role, user_global_access):
             flags=getattr(OrganizationMember.flags, u'sso:linked')
         )
         if organization_result:
-            logger.info("organization_result worked")
+            logger.info("Added user to organization")
+            return True
         else:
-            logger.info("organization_result failed")
-        return True
+            logger.error("Failed to add user to organization")
+            return False
     logger.info("User is already in organisation. Updating settings")
     user_organizations[0].role = user_role
+    user_organizations[0].has_global_access = user_global_access
     user_organizations[0].save()
 
 
