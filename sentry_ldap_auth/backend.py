@@ -2,18 +2,11 @@ from __future__ import absolute_import
 from django_auth_ldap.backend import LDAPBackend
 from django.conf import settings
 from django.db.models import Q
-from sentry.models import (
-    Organization,
-    OrganizationMember,
-    UserOption,
-    UserEmail
-)
-
+from sentry.models import (Organization, OrganizationMember, UserOption, UserEmail)
 
 
 import logging
 logger = logging.getLogger("sentry-ldap-auth")
-
 
 
 def get_sentry_role_from_group_Mapping(group_names):
@@ -50,7 +43,7 @@ def get_sentry_role_from_group_Mapping(group_names):
 
 
 
-def get_user_mail(ldap_user):
+def assign_mail_to_user(ldap_user, user):
     if 'mail' in ldap_user.attrs:
         email = ldap_user.attrs.get('mail')[0]
     elif hasattr(settings, 'AUTH_LDAP_DEFAULT_EMAIL_DOMAIN'):
@@ -58,8 +51,14 @@ def get_user_mail(ldap_user):
     else:
         email = ''
 
+    Empty_Email = UserEmail.objects.filter(Q(email='') | Q(email=' '), user=user)
+    if Empty_Email:
+        logger.info("Found empty EMail address in django. Deleting")
+        Empty_Email.delete()
+
     logger.info("EMAIL: " + email)
-    return email
+    #UserEmail.objects.get_or_create(user=user, email=email)    # This needs fixing
+    return True
 
 
 
@@ -94,24 +93,16 @@ class SentryLdapBackend(LDAPBackend):
             logger.warning("Did not find a user_model")
             return user_model
 
-        user = user_model[0]
-        user.is_managed = True
+        assign_mail_success = assign_mail_to_user(ldap_user, user_model[0])
+        if not assign_mail_success:
+            logger.warning("Unable to assign mail address to user")
+            return user_model
+        
+        
+        
+        user_model[0].is_managed = True
         user_global_access = getattr(settings, 'AUTH_LDAP_SENTRY_ORGANIZATION_GLOBAL_ACCESS', False)
         user_role = get_sentry_role_from_group_Mapping(ldap_user.group_names)
-        user_mail = get_user_mail(ldap_user)
-
-
-        #attributes = [attr for attr in dir(UserEmail) if not attr.startswith('__')]
-        #logger.info("test: " + str(attributes))
-        #UserEmail.objects.filter(Q(email='') | Q(email=' '), user=user).delete()
-        #if email:
-            #logger.info("I Still need fixing")
-            #UserEmail.objects.get_or_create(user=user, email=email)    # This needs fixing
-        test = UserEmail.objects.filter(Q(email='') | Q(email=' '), user=user)
-        if test:
-            logger.info("UserEmail Test: found one")
-        else:
-            logger.info("UserEmail Test: no mail")
         
         logger.info("get_or_build_user - End")
 
