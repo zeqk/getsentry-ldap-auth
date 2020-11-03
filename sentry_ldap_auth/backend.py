@@ -11,7 +11,7 @@ logger = logging.getLogger("sentry-ldap-auth")
 
 def get_sentry_role_from_group_Mapping(group_names):
     CONFIG_DEFAULT_ROLE = getattr(settings, 'AUTH_LDAP_SENTRY_ORGANIZATION_ROLE_TYPE', None)
-    
+
     CONFIG_ROLE_MAPPING = getattr(settings, 'AUTH_LDAP_SENTRY_GROUP_ROLE_MAPPING', None)
     if not group_names or not CONFIG_ROLE_MAPPING:
         if CONFIG_DEFAULT_ROLE:
@@ -56,12 +56,15 @@ def assign_mail_to_user(ldap_user, user):
         logger.info("Found empty mail address in django. Deleting")
         Empty_Email.delete()
 
-    logger.info("EMAIL: " + email)
 
-    if not user:
-        logger.info("not user")
-    else:
+    logger.info("EMAIL: " + email)
+    if user:
         logger.info("user is an object")
+        logger.info("user.username: " + user.username)
+        logger.info("user.name: " + user.name)
+        logger.info("user.email: " + user.email)
+    else:
+        logger.info("not user")
 
 
 
@@ -75,7 +78,7 @@ def assign_mail_to_user(ldap_user, user):
     return True
 
 
-def update_org_membership(user_model, user_role): 
+def update_org_membership(user_model, user_role):
     user_organizations = OrganizationMember.objects.filter(user=user_model)
     if user_organizations == None or len(user_organizations) == 0:
         logger.info("User is not in any organisation.")
@@ -108,8 +111,8 @@ def update_org_membership(user_model, user_role):
     user_organizations[0].role = user_role
     user_organizations[0].has_global_access = getattr(settings, 'AUTH_LDAP_SENTRY_ORGANIZATION_GLOBAL_ACCESS', False)
     user_organizations[0].save()
-    
-    
+
+
 
 class SentryLdapBackend(LDAPBackend):
     def get_or_build_user(self, username, ldap_user):
@@ -125,7 +128,7 @@ class SentryLdapBackend(LDAPBackend):
             pass
 
         CONFIG_USERNAME_FIELD = getattr(settings, 'AUTH_LDAP_SENTRY_USERNAME_FIELD', '')
-        if not CONFIG_USERNAME_FIELD: 
+        if not CONFIG_USERNAME_FIELD:
             logger.warning("AUTH_LDAP_SENTRY_USERNAME_FIELD Missing or Empty")
             pass
 
@@ -142,19 +145,17 @@ class SentryLdapBackend(LDAPBackend):
             logger.warning("Did not find a user model")
             return user_model
 
-        user_model[0].is_managed = True
-        
         assign_mail_success = assign_mail_to_user(ldap_user, user_model[0])
         if not assign_mail_success:
             logger.warning("Unable to assign mail address to user")
             return user_model
 
-        
+        user_model[0].is_managed = True
 
         if getattr(settings, 'AUTH_LDAP_SENTRY_SUBSCRIBE_BY_DEFAULT', True):
             UserOption.objects.set_value(user=user_model[0], project=None, key='subscribe_by_default', value='1')
         else:
-            UserOption.objects.set_value(user=user_model[0], project=None, key='subscribe_by_default', value='0')        
+            UserOption.objects.set_value(user=user_model[0], project=None, key='subscribe_by_default', value='0')
         user_role = get_sentry_role_from_group_Mapping(ldap_user.group_names)
 
         update_org_membership(user_model[0], user_role)
