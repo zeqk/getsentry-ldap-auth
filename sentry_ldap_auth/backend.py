@@ -63,17 +63,15 @@ def assign_mail_to_user(ldap_user, user):
     else:
         logger.info("user is an object")
 
-        Success = False;
-    try:
-        Created_Mail, Success = UserEmail.objects.get_or_create(user=user, email=email)
-    except:
-        logger.info("Creating User Mail")
+
+
+    Created_Mail, Success = UserEmail.objects.get_or_create(user=user, email=email)
 
     if Success:
         logger.info("Success")
     else:
         logger.info("failed")
-    
+
     return True
 
 
@@ -144,17 +142,19 @@ class SentryLdapBackend(LDAPBackend):
             logger.warning("Did not find a user model")
             return user_model
 
+        user_model[0].is_managed = True
+        
         assign_mail_success = assign_mail_to_user(ldap_user, user_model[0])
         if not assign_mail_success:
             logger.warning("Unable to assign mail address to user")
             return user_model
 
-        user_model[0].is_managed = True
+        
 
-        #if getattr(settings, 'AUTH_LDAP_SENTRY_SUBSCRIBE_BY_DEFAULT', True):
-            #UserOption.objects.set_value(user=user_model[0], project=None, key='subscribe_by_default', value='1')
-        #else:
-            #UserOption.objects.set_value(user=user_model[0], project=None, key='subscribe_by_default', value='0')        
+        if getattr(settings, 'AUTH_LDAP_SENTRY_SUBSCRIBE_BY_DEFAULT', True):
+            UserOption.objects.set_value(user=user_model[0], project=None, key='subscribe_by_default', value='1')
+        else:
+            UserOption.objects.set_value(user=user_model[0], project=None, key='subscribe_by_default', value='0')        
         user_role = get_sentry_role_from_group_Mapping(ldap_user.group_names)
 
         update_org_membership(user_model[0], user_role)
