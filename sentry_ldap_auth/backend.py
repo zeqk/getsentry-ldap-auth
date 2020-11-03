@@ -53,11 +53,15 @@ def assign_mail_to_user(ldap_user, user):
 
     Empty_Email = UserEmail.objects.filter(Q(email='') | Q(email=' '), user=user)
     if Empty_Email:
-        logger.info("Found empty EMail address in django. Deleting")
+        logger.info("Found empty mail address in django. Deleting")
         Empty_Email.delete()
 
     logger.info("EMAIL: " + email)
-    logger.info("user: " + user)
+
+    if not user:
+        logger.info("not user")
+    else:
+        logger.info("user is an object")
 
     try:
         Created_Mail, Success = UserEmail.objects.get_or_create(user=user, email=email)
