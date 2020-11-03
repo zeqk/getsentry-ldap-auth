@@ -151,10 +151,10 @@ class SentryLdapBackend(LDAPBackend):
 
         user_model[0].is_managed = True
 
-        if getattr(settings, 'AUTH_LDAP_SENTRY_SUBSCRIBE_BY_DEFAULT', True):
-            UserOption.objects.set_value(user=user_model[0], project=None, key='subscribe_by_default', value='1')
-        else:
-            UserOption.objects.set_value(user=user_model[0], project=None, key='subscribe_by_default', value='0')        
+        #if getattr(settings, 'AUTH_LDAP_SENTRY_SUBSCRIBE_BY_DEFAULT', True):
+            #UserOption.objects.set_value(user=user_model[0], project=None, key='subscribe_by_default', value='1')
+        #else:
+            #UserOption.objects.set_value(user=user_model[0], project=None, key='subscribe_by_default', value='0')        
         user_role = get_sentry_role_from_group_Mapping(ldap_user.group_names)
 
         update_org_membership(user_model[0], user_role)
