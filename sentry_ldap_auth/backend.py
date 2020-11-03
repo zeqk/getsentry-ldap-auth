@@ -57,7 +57,13 @@ def assign_mail_to_user(ldap_user, user):
         Empty_Email.delete()
 
     logger.info("EMAIL: " + email)
-    Created_Mail, Success = UserEmail.objects.get_or_create(user=user, email=email)  #Whats up with this?
+    logger.info("user: " + user)
+
+    try:
+        Created_Mail, Success = UserEmail.objects.get_or_create(user=user, email=email)
+    except:
+        logger.info("Creating User Mail")
+
     if Success:
         logger.info("Success")
     else:
