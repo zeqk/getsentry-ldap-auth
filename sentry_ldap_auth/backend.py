@@ -63,6 +63,7 @@ def assign_mail_to_user(ldap_user, user):
     else:
         logger.info("user is an object")
 
+        Success = False;
     try:
         Created_Mail, Success = UserEmail.objects.get_or_create(user=user, email=email)
     except:
