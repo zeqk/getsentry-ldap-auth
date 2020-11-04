@@ -56,7 +56,8 @@ def assign_mail_to_user(ldap_user, user):
         logger.info("Found empty mail address in django. Deleting")
         Empty_Email.delete()
 
-
+    user.email = email;
+    
     logger.info("EMAIL: " + email)
     if user:
         logger.info("user is an object")
@@ -67,14 +68,19 @@ def assign_mail_to_user(ldap_user, user):
         logger.info("not user")
 
 
-    user.email = email;
     
-    Created_Mail, Success = UserEmail.objects.get_or_create(user=user, email=user.email)
-
-    if Success:
+    Created_Mail = UserEmail.get_primary_email(user=user)
+    if Created_Mail:
         logger.info("Success")
     else:
         logger.info("failed")
+        
+    #Created_Mail, Success = UserEmail.objects.get_or_create(user=user, email=user.email)
+
+    #if Success:
+        #logger.info("Success")
+    #else:
+        #logger.info("failed")
 
     return True
 
