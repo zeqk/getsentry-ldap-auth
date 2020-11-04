@@ -73,6 +73,7 @@ def assign_mail_to_user(ldap_user, user):
         logger.info("useremail Success")
     else:
         logger.info("useremail failed")
+    useremail.save()
 
     
         
