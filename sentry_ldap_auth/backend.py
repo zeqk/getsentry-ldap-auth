@@ -68,12 +68,17 @@ def assign_mail_to_user(ldap_user, user):
         logger.info("not user")
 
 
-    useremail = UserEmail(user=user, email=email)
-    if useremail:
-        logger.info("useremail Success")
+    Created_Mail, Success = UserEmail.objects.get_or_create(user=user, email=email)
+
+    if Success:
+        logger.info("Success")
     else:
-        logger.info("useremail failed")
-    useremail.save()
+        logger.info("failed")
+
+    if Created_Mail:
+        logger.info("Created_Mail")
+    else:
+        logger.info("NOT Created_Mail") 
 
     
         
