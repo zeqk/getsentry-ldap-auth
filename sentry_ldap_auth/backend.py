@@ -75,7 +75,7 @@ def assign_mail_to_user(ldap_user, user):
     else:
         logger.info("failed")
 
-     if Created_Mail:
+    if Created_Mail:
         logger.info("Created_Mail")
     else:
         logger.info("NOT Created_Mail")       
