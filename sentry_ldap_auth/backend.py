@@ -143,29 +143,25 @@ class SentryLdapBackend(LDAPBackend):
         if isinstance(username, (list, tuple)):
             username = username[0]
 
-        user_model, Success = super(SentryLdapBackend, self).get_or_build_user(username, ldap_user)
-        if not Success:
+        user_model = super(SentryLdapBackend, self).get_or_build_user(username, ldap_user)
+        if len(user_model) < 1:
             logger.warning("Did not find a user model")
             return user_model
-        #user_model = super(SentryLdapBackend, self).get_or_build_user(username, ldap_user)
-        #if len(user_model) < 1:
-            #logger.warning("Did not find a user model")
-            #return user_model
 
-        assign_mail_success = assign_mail_to_user(ldap_user, user_model)
+        assign_mail_success = assign_mail_to_user(ldap_user, user_model[0])
         if not assign_mail_success:
             logger.warning("Unable to assign mail address to user")
             return user_model
 
-        user_model.is_managed = True
+        user_model[0].is_managed = True
 
         if getattr(settings, 'AUTH_LDAP_SENTRY_SUBSCRIBE_BY_DEFAULT', True):
-            UserOption.objects.set_value(user=user_model, project=None, key='subscribe_by_default', value='1')
+            UserOption.objects.set_value(user=user_model[0], project=None, key='subscribe_by_default', value='1')
         else:
-            UserOption.objects.set_value(user=user_model, project=None, key='subscribe_by_default', value='0')
+            UserOption.objects.set_value(user=user_model[0], project=None, key='subscribe_by_default', value='0')
         user_role = get_sentry_role_from_group_Mapping(ldap_user.group_names)
 
-        update_org_membership(user_model, user_role)
+        update_org_membership(user_model[0], user_role)
 
         logger.info("End")
         return user_model
