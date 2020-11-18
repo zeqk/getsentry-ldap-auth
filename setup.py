@@ -12,7 +12,7 @@ with open("README.md", "r") as readme:
     long_description = readme.read()
 
 install_requires = [
-    'django-auth-ldap==2.*',
+    'django-auth-ldap==2.2.0',
     'sentry>=10.0.0'
 ]
 
